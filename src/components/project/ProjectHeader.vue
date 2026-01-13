@@ -6,6 +6,7 @@
  * @author David Chab
  */
 import { ref, computed } from 'vue';
+import ProgressBar from '../common/ProgressBar.vue';
 
 const props = defineProps({
   project: Object,
@@ -178,20 +179,8 @@ const statusOptions = [
       </div>
     </div>
 
-    <!-- Progress Bar -->
-    <div class="progress-section">
-      <div class="progress-info">
-        <span class="progress-label">Progreso del proyecto</span>
-        <span class="progress-value">{{ progress }}%</span>
-      </div>
-      <div class="progress-bar">
-        <div
-          class="progress-fill"
-          :class="{ complete: progress === 100 }"
-          :style="{ width: progress + '%' }"
-        ></div>
-      </div>
-    </div>
+    <!-- Progress Bar Component -->
+    <ProgressBar :progress="progress" label="Progreso del proyecto" />
   </div>
 </template>
 
@@ -401,7 +390,6 @@ const statusOptions = [
   border-color: rgba(255,255,255,0.6);
 }
 
-/* Override date picker color scheme */
 .date-input::-webkit-calendar-picker-indicator {
   filter: invert(1);
 }
@@ -496,46 +484,5 @@ const statusOptions = [
 
 .btn-action .icon {
   font-size: 1rem;
-}
-
-/* Progress Section */
-.progress-section {
-  background: rgba(255,255,255,0.15);
-  border-radius: 12px;
-  padding: 1rem;
-}
-
-.progress-info {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 0.5rem;
-}
-
-.progress-label {
-  font-size: 0.85rem;
-  opacity: 0.9;
-}
-
-.progress-value {
-  font-weight: 700;
-  font-size: 0.9rem;
-}
-
-.progress-bar {
-  height: 8px;
-  background: rgba(255,255,255,0.3);
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: white;
-  border-radius: 4px;
-  transition: width 0.5s ease;
-}
-
-.progress-fill.complete {
-  background: #10b981;
 }
 </style>
