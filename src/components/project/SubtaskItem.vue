@@ -125,6 +125,12 @@ const cancelDates = () => {
         />
       </div>
       <div v-else class="title-row">
+        <span 
+          class="status-badge" 
+          :class="subtask.estado === 'completado' ? 'completed' : 'pending'"
+        >
+          {{ subtask.estado === 'completado' ? 'Completado' : 'Pendiente' }}
+        </span>
         <span class="subtask-title" :class="{ done: subtask.estado === 'completado' }">
           {{ subtask.titulo }}
         </span>
@@ -447,5 +453,24 @@ const cancelDates = () => {
 
 .btn-delete:hover {
   color: #ef4444;
+}
+
+.status-badge {
+  font-size: 0.6rem;
+  padding: 1px 4px;
+  border-radius: 4px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.status-badge.completed {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.status-badge.pending {
+  background-color: #f1f5f9;
+  color: #64748b;
 }
 </style>
