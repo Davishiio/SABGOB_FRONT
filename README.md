@@ -88,15 +88,6 @@ Vista de calendario mensual con:
 - Tareas (fecha límite)
 - Subtareas (fecha límite)
 
-## Scripts Disponibles
-
-```bash
-npm run dev      # Servidor de desarrollo
-npm run build    # Build de producción
-npm run preview  # Previsualizar build
-npm run lint     # Ejecutar ESLint
-npm run format   # Formatear con Prettier
-```
 
 ## API Backend
 
