@@ -6,11 +6,7 @@ import { RouterView } from 'vue-router'
   <RouterView />
 </template>
 
+
 <style>
-/* Estilos globales opcionales (reset básico) */
-body {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+/* Los estilos globales ahora están en assets/base.css */
 </style>
