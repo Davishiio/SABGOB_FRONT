@@ -1,5 +1,4 @@
 import { createRouter, createWebHistory } from 'vue-router'
-// Asegúrate de que LoginView esté en esta ruta correcta
 import LoginView from '../views/LoginView.vue'
 
 const router = createRouter({
@@ -15,17 +14,21 @@ const router = createRouter({
       component: LoginView
     },
     {
-      // ESTA ES LA RUTA QUE TE FALTA
       path: '/dashboard',
       name: 'dashboard',
-      // Lazy loading: Carga el archivo solo cuando entras
       component: () => import('../views/DashboardView.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/proyectos/:id', // :id es el parámetro dinámico
+      name: 'project-detail',
+      component: () => import('../views/ProjectDetailView.vue'),
       meta: { requiresAuth: true }
     }
   ]
 })
 
-// Guardia de navegación para proteger /dashboard
+// Guardia de navegación
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('token');
 
