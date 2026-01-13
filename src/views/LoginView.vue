@@ -18,12 +18,11 @@ const handleLogin = async () => {
       email: email.value,
       password: password.value
     });
-    // Si tiene éxito, el store redirige automáticamente
   } catch (error) {
     if (error.response && error.response.status === 422) {
-      errorMsg.value = "Credenciales incorrectas. Verifica tu correo y contraseña.";
+      errorMsg.value = "Credenciales incorrectas.";
     } else {
-      errorMsg.value = "Ocurrió un error al conectar con el servidor.";
+      errorMsg.value = "Error de conexión.";
     }
   } finally {
     isLoading.value = false;
@@ -32,149 +31,225 @@ const handleLogin = async () => {
 </script>
 
 <template>
-  <div class="login-container">
-    <div class="login-card">
-      <div class="header">
-        <h1>Bienvenido</h1>
-        <p>Sistema de Gestión de Tareas</p>
-      </div>
-
-      <form @submit.prevent="handleLogin" class="login-form">
-        <div class="form-group">
-          <label for="email">Correo Electrónico</label>
-          <input
-            type="email"
-            id="email"
-            v-model="email"
-            required
-            placeholder="ejemplo@correo.com"
-          />
+  <div class="login-wrapper">
+    <div class="login-decoration">
+       <!-- Decorative circle or pattern -->
+       <div class="circle-splotch"></div>
+    </div>
+    
+    <div class="login-card-container">
+      <div class="card-content">
+        <div class="brand-section">
+          <div class="logo-box">G</div>
+          <h1>GestorPro</h1>
         </div>
 
-        <div class="form-group">
-          <label for="password">Contraseña</label>
-          <input
-            type="password"
-            id="password"
-            v-model="password"
-            required
-            placeholder="••••••••"
-          />
-        </div>
+        <h2 class="welcome-text">¡Hola de nuevo!</h2>
+        <p class="subtitle">Ingresa tus credenciales para acceder.</p>
 
-        <div v-if="errorMsg" class="error-alert">
-          {{ errorMsg }}
-        </div>
+        <form @submit.prevent="handleLogin" class="login-form">
+          <div class="input-group">
+            <label for="email">Correo Electrónico</label>
+            <input
+              type="email"
+              id="email"
+              v-model="email"
+              required
+              placeholder="ejemplo@correo.com"
+              class="modern-input"
+            />
+          </div>
 
-        <button type="submit" :disabled="isLoading" class="btn-primary">
-          <span v-if="isLoading">Cargando...</span>
-          <span v-else>Iniciar Sesión</span>
-        </button>
-      </form>
+          <div class="input-group">
+            <label for="password">Contraseña</label>
+            <input
+              type="password"
+              id="password"
+              v-model="password"
+              required
+              placeholder="••••••••"
+              class="modern-input"
+            />
+          </div>
 
-      <div class="footer">
-        <p>¿No tienes cuenta? Contacta al administrador.</p>
+          <div v-if="errorMsg" class="error-msg">
+            <span class="error-icon">⚠️</span> {{ errorMsg }}
+          </div>
+
+          <button type="submit" :disabled="isLoading" class="btn-submit">
+            <span v-if="isLoading" class="spinner-mini"></span>
+            <span v-else>Iniciar Sesión</span>
+          </button>
+        </form>
+
+        <p class="footer-links">
+          ¿Problemas para acceder? <a href="#">Contacta a soporte</a>
+        </p>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-/* Estilos modernos y limpios sin dependencias externas */
-.login-container {
+.login-wrapper {
+  position: relative;
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-  font-family: 'Segoe UI', sans-serif;
+  background-color: #f3f4f6;
+  overflow: hidden;
 }
 
-.login-card {
+/* Decorative background */
+.login-wrapper::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(135deg, #e0e7ff 0%, #f3f4f6 100%);
+  z-index: 0;
+}
+
+.circle-splotch {
+  position: absolute;
+  top: -10%; right: -10%;
+  width: 50vw; height: 50vw;
+  background: radial-gradient(circle, rgba(99,102,241,0.15) 0%, rgba(255,255,255,0) 70%);
+  border-radius: 50%;
+  z-index: 1;
+}
+
+.login-card-container {
+  position: relative;
   background: white;
-  padding: 2.5rem;
-  border-radius: 12px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-  width: 100%;
-  max-width: 400px;
+  width: 90%;
+  max-width: 450px;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  z-index: 10;
+  overflow: hidden;
 }
 
-.header h1 {
-  color: #2c3e50;
-  margin-bottom: 0.5rem;
-  font-size: 1.8rem;
-  text-align: center;
+.card-content {
+  padding: 3rem 2.5rem;
 }
 
-.header p {
-  color: #7f8c8d;
-  text-align: center;
+.brand-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
   margin-bottom: 2rem;
 }
 
-.form-group {
+.logo-box {
+  width: 42px; height: 42px;
+  background: var(--color-primary);
+  color: white;
+  font-size: 1.5rem; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 12px;
+}
+
+.brand-section h1 {
+  font-size: 1.5rem;
+  color: var(--color-text-main);
+  margin: 0;
+}
+
+.welcome-text {
+  text-align: center;
+  margin-bottom: 0.5rem;
+  color: var(--color-text-main);
+}
+
+.subtitle {
+  text-align: center;
+  color: var(--color-text-muted);
+  margin-bottom: 2rem;
+  font-size: 0.95rem;
+}
+
+.input-group {
   margin-bottom: 1.5rem;
 }
 
 label {
   display: block;
   margin-bottom: 0.5rem;
-  color: #34495e;
-  font-weight: 600;
   font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text-main);
 }
 
-input {
+.modern-input {
   width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #ddd;
-  border-radius: 6px;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: #f9fafb;
   font-size: 1rem;
-  transition: border-color 0.3s;
+  transition: all 0.2s;
 }
 
-input:focus {
+.modern-input:focus {
+  background-color: white;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
   outline: none;
-  border-color: #3498db;
-  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
 }
 
-.btn-primary {
+.btn-submit {
   width: 100%;
   padding: 0.85rem;
-  background-color: #2c3e50;
+  background: var(--color-primary);
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: background 0.2s;
+  display: flex; align-items: center; justify-content: center;
 }
 
-.btn-primary:hover:not(:disabled) {
-  background-color: #34495e;
+.btn-submit:hover:not(:disabled) {
+  background: var(--color-primary-dark);
 }
 
-.btn-primary:disabled {
-  background-color: #95a5a6;
-  cursor: not-allowed;
+.btn-submit:disabled {
+  opacity: 0.7; cursor: not-allowed;
 }
 
-.error-alert {
-  background-color: #fee2e2;
-  color: #b91c1c;
+.error-msg {
+  background-color: #fef2f2;
+  color: #dc2626;
   padding: 0.75rem;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   margin-bottom: 1.5rem;
   font-size: 0.9rem;
-  text-align: center;
+  display: flex; align-items: center; gap: 0.5rem;
 }
 
-.footer {
-  margin-top: 1.5rem;
+.footer-links {
+  margin-top: 2rem;
   text-align: center;
-  font-size: 0.85rem;
-  color: #95a5a6;
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
 }
+
+.footer-links a {
+  color: var(--color-primary);
+  font-weight: 500;
+}
+
+.spinner-mini {
+  width: 20px; height: 20px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin { 100% { transform: rotate(360deg); } }
 </style>
