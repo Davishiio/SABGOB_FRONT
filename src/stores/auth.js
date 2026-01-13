@@ -53,6 +53,19 @@ export const useAuthStore = defineStore('auth', {
 
       // 4. Redirigir al login
       router.push('/login');
+    },
+
+    // ACCIÓN DE OBTENER USER (Nueva)
+    async fetchUser() {
+      if (!this.token) return;
+      try {
+        const response = await axios.get('/api/user');
+        this.user = response.data;
+        this.role = response.data.role;
+      } catch (error) {
+        console.error("Error fetching user:", error);
+        this.logout();
+      }
     }
   }
 });
