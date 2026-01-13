@@ -19,12 +19,7 @@ const router = createRouter({
       component: () => import('../views/DashboardView.vue'),
       meta: { requiresAuth: true }
     },
-    {
-      path: '/proyectos/:id', // :id es el parámetro dinámico
-      name: 'project-detail',
-      component: () => import('../views/ProjectDetailView.vue'),
-      meta: { requiresAuth: true }
-    },
+
     {
       path: '/calendario',
       name: 'calendar',
