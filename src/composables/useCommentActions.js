@@ -119,16 +119,64 @@ export function useCommentActions(project) {
   };
 
   /**
+   * Helper: Busca y ejecuta acción en el comentario dentro del árbol del proyecto
+   */
+  const findAndAction = (commentId, action) => {
+    // 1. Buscar en Proyecto
+    if (project.value.comments) {
+      const idx = project.value.comments.findIndex(c => c.id === commentId);
+      if (idx !== -1) {
+        action(project.value.comments, idx);
+        return true;
+      }
+    }
+
+    // 2. Buscar en Tareas y sus Subtareas
+    if (project.value.tasks) {
+      for (const task of project.value.tasks) {
+        // En Tarea
+        if (task.comments) {
+          const idx = task.comments.findIndex(c => c.id === commentId);
+          if (idx !== -1) {
+            action(task.comments, idx);
+            return true;
+          }
+        }
+        // En Subtareas
+        if (task.subtareas) {
+          for (const sub of task.subtareas) {
+            if (sub.comments) {
+              const idx = sub.comments.findIndex(c => c.id === commentId);
+              if (idx !== -1) {
+                action(sub.comments, idx);
+                return true;
+              }
+            }
+          }
+        }
+      }
+    }
+    return false;
+  };
+
+  /**
    * Edita un comentario existente
    */
   const editComment = async (comment, newText) => {
-    const original = comment.cuerpo;
-    comment.cuerpo = newText;
+    const originalText = comment.cuerpo;
+    
+    // Actualizar optimísticamente en el árbol local
+    findAndAction(comment.id, (list, idx) => {
+      list[idx].cuerpo = newText;
+    });
 
     try {
       await axios.put(`/api/comentarios/${comment.id}`, { cuerpo: newText });
     } catch {
-      comment.cuerpo = original;
+      // Revertir si falla
+      findAndAction(comment.id, (list, idx) => {
+        list[idx].cuerpo = originalText;
+      });
       alert('Error al editar');
     }
   };
@@ -139,13 +187,20 @@ export function useCommentActions(project) {
   const deleteComment = async (commentId) => {
     if (!confirm('¿Eliminar comentario?')) return;
 
-    const idx = activeTarget.value.comments.findIndex(c => c.id === commentId);
-    if (idx !== -1) activeTarget.value.comments.splice(idx, 1);
+    // Eliminar optimísticamente del árbol local
+    findAndAction(commentId, (list, idx) => {
+      list.splice(idx, 1);
+    });
+
+    // Si estamos en la vista 'Todos', forzar reactividad si fuera necesario
+    // (activeTarget.value es reactivo, displayedComments se recalculará)
 
     try {
       await axios.delete(`/api/comentarios/${commentId}`);
     } catch (error) {
       console.error('Error al eliminar comentario:', error);
+      alert('Error al eliminar');
+      // Recargar proyecto idealmente, o manejar rollback complejo
     }
   };
 
