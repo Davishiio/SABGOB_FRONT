@@ -24,6 +24,12 @@ const router = createRouter({
       name: 'project-detail',
       component: () => import('../views/ProjectDetailView.vue'),
       meta: { requiresAuth: true }
+    },
+    {
+      path: '/calendario',
+      name: 'calendar',
+      component: () => import('../views/CalendarView.vue'),
+      meta: { requiresAuth: true }
     }
   ]
 })
