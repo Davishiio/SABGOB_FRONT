@@ -148,6 +148,12 @@ const handleAddSubtask = (title) => {
           />
         </div>
         <div v-else class="title-row">
+          <span 
+            class="status-badge" 
+            :class="task.estado === 'completado' ? 'completed' : 'pending'"
+          >
+            {{ task.estado === 'completado' ? 'Completado' : 'Pendiente' }}
+          </span>
           <span class="task-title" :class="{ done: task.estado === 'completado' }">
             {{ task.titulo }}
           </span>
@@ -549,5 +555,26 @@ const handleAddSubtask = (title) => {
 
 .subtasks-list {
   margin-bottom: 0;
+}
+</style>
+
+<style scoped>
+.status-badge {
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.status-badge.completed {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.status-badge.pending {
+  background-color: #f1f5f9;
+  color: #64748b;
 }
 </style>
