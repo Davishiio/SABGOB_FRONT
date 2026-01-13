@@ -69,7 +69,7 @@ const formatDate = (date) => {
           v-for="comment in comments" 
           :key="comment.id" 
           class="message"
-          :class="{ own: comment.idUsuario === currentUserId }"
+          :class="{ own: comment.idUsuario == currentUserId }"
         >
           <!-- Context Badge -->
           <div v-if="comment._context" class="context-badge">
@@ -91,9 +91,9 @@ const formatDate = (date) => {
           
           <!-- Message Content -->
           <div v-else class="message-body">
-            <div class="message-actions" v-if="comment.idUsuario === currentUserId">
+            <div class="message-actions" v-if="comment.idUsuario == currentUserId">
               <button @click="startEdit(comment)" title="Editar">✏️</button>
-              <button @click="$emit('delete', comment.id)" title="Eliminar">🗑️</button>
+              <button @click="$emit('delete', comment.id)" title="Eliminar">❌</button>
             </div>
             <p class="text">{{ comment.cuerpo }}</p>
             <div class="meta">
@@ -253,13 +253,11 @@ const formatDate = (date) => {
   right: 0;
   display: flex;
   gap: 0.25rem;
-  opacity: 0;
+  opacity: 1; /* Siempre visible */
   transition: opacity 0.2s;
 }
 
-.message:hover .message-actions {
-  opacity: 1;
-}
+/* Eliminado .message:hover .message-actions */
 
 .message-actions button {
   border: none;
