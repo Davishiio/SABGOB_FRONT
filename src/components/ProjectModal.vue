@@ -200,6 +200,8 @@ const onEditComment = ({ comment, newText }) => editComment(comment, newText);
                     :key="task.id"
                     :task="task"
                     :current-user-id="currentUser?.id"
+                    :project-fecha-inicio="project.fecha_inicio"
+                    :project-fecha-limite="project.fecha_limite"
                     @toggle-status="toggleTaskStatus"
                     @update-title="onUpdateTaskTitle"
                     @update-task="onUpdateTaskDetails"
