@@ -1,15 +1,24 @@
 <script setup>
 /**
- * TaskCard - Tarjeta de tarea con edición de fechas y comentarios
+ * TaskCard - Tarjeta de tarea con edición y subtareas
  * 
  * @author David Chab
  */
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
+import SubtaskItem from './SubtaskItem.vue';
+import AddSubtaskForm from './AddSubtaskForm.vue';
 
 const props = defineProps({
   task: Object,
-  currentUserId: Number
+  currentUserId: Number,
+  projectFechaInicio: String,
+  projectFechaLimite: String
 });
+
+// Computed para límites de fechas de tarea
+const taskDateMin = computed(() => props.projectFechaInicio?.split('T')[0] || null);
+const taskDateMax = computed(() => props.projectFechaLimite?.split('T')[0] || null);
+const dateError = ref('');
 
 const emit = defineEmits([
   'toggle-status',
@@ -26,7 +35,6 @@ const emit = defineEmits([
 ]);
 
 const isExpanded = ref(false);
-const newSubtaskTitle = ref('');
 
 // Task editing
 const isEditingTask = ref(false);
@@ -35,16 +43,8 @@ const isEditingTaskDates = ref(false);
 const editTaskFechaInicio = ref('');
 const editTaskFechaLimite = ref('');
 
-// Subtask editing
-const editingSubtaskId = ref(null);
-const editSubtaskTitle = ref('');
-const editingSubtaskDatesId = ref(null);
-const editSubtaskFechaInicio = ref('');
-const editSubtaskFechaLimite = ref('');
-
 const toggle = () => isExpanded.value = !isExpanded.value;
 
-// Format date helper
 const formatDate = (dateStr) => {
   if (!dateStr) return null;
   return new Date(dateStr).toLocaleDateString('es-ES', { 
@@ -53,7 +53,7 @@ const formatDate = (dateStr) => {
   });
 };
 
-// --- Task Title Edit ---
+// Task Title Edit
 const startEditTask = () => {
   editTaskTitle.value = props.task.titulo;
   isEditingTask.value = true;
@@ -66,7 +66,7 @@ const saveTaskEdit = () => {
   isEditingTask.value = false;
 };
 
-// --- Task Dates Edit ---
+// Task Dates Edit
 const startEditTaskDates = () => {
   editTaskFechaInicio.value = props.task.fecha_inicio?.split('T')[0] || '';
   editTaskFechaLimite.value = props.task.fecha_limite?.split('T')[0] || '';
@@ -74,6 +74,18 @@ const startEditTaskDates = () => {
 };
 
 const saveTaskDates = () => {
+  dateError.value = '';
+  
+  // Validar contra fechas del proyecto
+  if (taskDateMin.value && editTaskFechaInicio.value && editTaskFechaInicio.value < taskDateMin.value) {
+    dateError.value = 'Fecha inicio no puede ser anterior al proyecto';
+    return;
+  }
+  if (taskDateMax.value && editTaskFechaLimite.value && editTaskFechaLimite.value > taskDateMax.value) {
+    dateError.value = 'Fecha límite no puede ser posterior al proyecto';
+    return;
+  }
+  
   emit('update-task', {
     task: props.task,
     data: {
@@ -88,51 +100,22 @@ const cancelTaskDates = () => {
   isEditingTaskDates.value = false;
 };
 
-// --- Subtask Title Edit ---
-const startEditSubtask = (sub) => {
-  editingSubtaskId.value = sub.id;
-  editSubtaskTitle.value = sub.titulo;
-};
-
-const saveSubtaskEdit = (sub) => {
-  if (editSubtaskTitle.value.trim() && editSubtaskTitle.value !== sub.titulo) {
-    emit('update-subtask', { subtask: sub, newTitle: editSubtaskTitle.value });
-  }
-  editingSubtaskId.value = null;
-};
-
-// --- Subtask Dates Edit ---
-const startEditSubtaskDates = (sub) => {
-  editSubtaskFechaInicio.value = sub.fecha_inicio?.split('T')[0] || '';
-  editSubtaskFechaLimite.value = sub.fecha_limite?.split('T')[0] || '';
-  editingSubtaskDatesId.value = sub.id;
-};
-
-const saveSubtaskDates = (sub) => {
-  emit('update-subtask-details', {
-    subtask: sub,
-    data: {
-      fecha_inicio: editSubtaskFechaInicio.value || null,
-      fecha_limite: editSubtaskFechaLimite.value || null
-    }
-  });
-  editingSubtaskDatesId.value = null;
-};
-
-const cancelSubtaskDates = () => {
-  editingSubtaskDatesId.value = null;
-};
-
-// --- Add Subtask ---
-const addSubtask = () => {
-  if (!newSubtaskTitle.value.trim()) return;
-  emit('add-subtask', { taskId: props.task.id, title: newSubtaskTitle.value });
-  newSubtaskTitle.value = '';
-};
-
 const getUnreadCount = (comments) => {
   if (!comments || !props.currentUserId) return 0;
   return comments.filter(c => c.estado === 'enviado' && c.idUsuario !== props.currentUserId).length;
+};
+
+// Subtask handlers
+const handleSubtaskTitleUpdate = (subtask, newTitle) => {
+  emit('update-subtask', { subtask, newTitle });
+};
+
+const handleSubtaskDatesUpdate = (subtask, data) => {
+  emit('update-subtask-details', { subtask, data });
+};
+
+const handleAddSubtask = (title) => {
+  emit('add-subtask', { taskId: props.task.id, title });
 };
 </script>
 
@@ -175,16 +158,29 @@ const getUnreadCount = (comments) => {
         <div v-if="isEditingTaskDates" class="dates-edit-inline">
           <div class="date-field">
             <label>📅 Inicio</label>
-            <input type="date" v-model="editTaskFechaInicio" class="date-input-sm" />
+            <input 
+              type="date" 
+              v-model="editTaskFechaInicio" 
+              :min="taskDateMin" 
+              :max="taskDateMax"
+              class="date-input-sm" 
+            />
           </div>
           <div class="date-field">
             <label>🎯 Límite</label>
-            <input type="date" v-model="editTaskFechaLimite" class="date-input-sm" />
+            <input 
+              type="date" 
+              v-model="editTaskFechaLimite" 
+              :min="taskDateMin" 
+              :max="taskDateMax"
+              class="date-input-sm" 
+            />
           </div>
           <div class="date-actions">
             <button class="btn-save-sm" @click="saveTaskDates">✓</button>
             <button class="btn-cancel-sm" @click="cancelTaskDates">✕</button>
           </div>
+          <span v-if="dateError" class="date-error">{{ dateError }}</span>
         </div>
         <div v-else class="dates-display" @click="startEditTaskDates">
           <span v-if="task.fecha_inicio || task.fecha_limite" class="dates-info">
@@ -221,86 +217,22 @@ const getUnreadCount = (comments) => {
     <!-- Subtasks Panel -->
     <div v-if="isExpanded" class="subtasks-panel">
       <div class="subtasks-list">
-        <div v-for="sub in task.subtareas" :key="sub.id" class="subtask-item">
-          <label class="checkbox-wrapper sm">
-            <input
-              type="checkbox"
-              :checked="sub.estado === 'completado'"
-              @change="$emit('toggle-subtask', sub)"
-            />
-            <span class="checkmark">
-              <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-            </span>
-          </label>
-
-          <div class="subtask-content">
-            <!-- Editable Subtask Title -->
-            <div v-if="editingSubtaskId === sub.id" class="edit-inline">
-              <input
-                v-model="editSubtaskTitle"
-                @keyup.enter="saveSubtaskEdit(sub)"
-                @keyup.escape="editingSubtaskId = null"
-                @blur="saveSubtaskEdit(sub)"
-                class="edit-input sm"
-                autofocus
-              />
-            </div>
-            <div v-else class="subtask-title-row">
-              <span class="subtask-title" :class="{ done: sub.estado === 'completado' }">
-                {{ sub.titulo }}
-              </span>
-              <button class="btn-edit sm" @click="startEditSubtask(sub)" title="Editar">✏️</button>
-            </div>
-
-            <!-- Subtask Dates -->
-            <div v-if="editingSubtaskDatesId === sub.id" class="dates-edit-inline sm">
-              <div class="date-field">
-                <label>📅</label>
-                <input type="date" v-model="editSubtaskFechaInicio" class="date-input-xs" />
-              </div>
-              <div class="date-field">
-                <label>🎯</label>
-                <input type="date" v-model="editSubtaskFechaLimite" class="date-input-xs" />
-              </div>
-              <div class="date-actions">
-                <button class="btn-save-xs" @click="saveSubtaskDates(sub)">✓</button>
-                <button class="btn-cancel-xs" @click="cancelSubtaskDates">✕</button>
-              </div>
-            </div>
-            <div v-else class="dates-display sm" @click="startEditSubtaskDates(sub)">
-              <span v-if="sub.fecha_inicio || sub.fecha_limite" class="dates-info">
-                <span v-if="sub.fecha_inicio" class="date-tag sm">📅 {{ formatDate(sub.fecha_inicio) }}</span>
-                <span v-if="sub.fecha_limite" class="date-tag deadline sm">🎯 {{ formatDate(sub.fecha_limite) }}</span>
-              </span>
-              <span v-else class="add-dates-hint sm">+ fechas</span>
-            </div>
-          </div>
-
-          <!-- Subtask Actions -->
-          <div class="subtask-actions">
-            <button
-              class="btn-comment-sub"
-              :class="{ 'has-unread': getUnreadCount(sub.comments) > 0 }"
-              @click="$emit('view-subtask-comments', sub)"
-              title="Comentarios"
-            >
-              💬
-              <span v-if="getUnreadCount(sub.comments)" class="badge-sm">{{ getUnreadCount(sub.comments) }}</span>
-            </button>
-            <button class="btn-delete-sub" @click="$emit('delete-subtask', { task, subtaskId: sub.id })" title="Eliminar">×</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Add Subtask -->
-      <div class="add-subtask">
-        <input
-          v-model="newSubtaskTitle"
-          @keyup.enter="addSubtask"
-          placeholder="+ Agregar subtarea"
+        <SubtaskItem
+          v-for="sub in task.subtareas"
+          :key="sub.id"
+          :subtask="sub"
+          :current-user-id="currentUserId"
+          :task-fecha-inicio="task.fecha_inicio"
+          :task-fecha-limite="task.fecha_limite"
+          @toggle-status="$emit('toggle-subtask', sub)"
+          @update-title="handleSubtaskTitleUpdate(sub, $event)"
+          @update-dates="handleSubtaskDatesUpdate(sub, $event)"
+          @delete="$emit('delete-subtask', { task, subtaskId: sub.id })"
+          @view-comments="$emit('view-subtask-comments', sub)"
         />
-        <button v-if="newSubtaskTitle.trim()" class="btn-add" @click="addSubtask">OK</button>
       </div>
+
+      <AddSubtaskForm @add-subtask="handleAddSubtask" />
     </div>
   </div>
 </template>
@@ -344,11 +276,6 @@ const getUnreadCount = (comments) => {
   cursor: pointer;
   flex-shrink: 0;
   margin-top: 2px;
-}
-
-.checkbox-wrapper.sm {
-  width: 18px;
-  height: 18px;
 }
 
 .checkbox-wrapper input {
@@ -425,10 +352,6 @@ const getUnreadCount = (comments) => {
   opacity: 1;
 }
 
-.btn-edit.sm {
-  font-size: 0.7rem;
-}
-
 .edit-inline {
   display: flex;
   flex: 1;
@@ -444,20 +367,11 @@ const getUnreadCount = (comments) => {
   outline: none;
 }
 
-.edit-input.sm {
-  font-size: 0.85rem;
-  padding: 0.25rem 0.4rem;
-}
-
 /* Dates Display */
 .dates-display {
   margin-top: 0.35rem;
   cursor: pointer;
   padding: 0.2rem 0;
-}
-
-.dates-display.sm {
-  margin-top: 0.2rem;
 }
 
 .dates-info {
@@ -474,11 +388,6 @@ const getUnreadCount = (comments) => {
   border-radius: 4px;
 }
 
-.date-tag.sm {
-  font-size: 0.65rem;
-  padding: 0.1rem 0.3rem;
-}
-
 .date-tag.deadline {
   background: #fef3c7;
   color: #92400e;
@@ -489,10 +398,6 @@ const getUnreadCount = (comments) => {
   color: #94a3b8;
   opacity: 0.7;
   transition: opacity 0.2s;
-}
-
-.add-dates-hint.sm {
-  font-size: 0.65rem;
 }
 
 .dates-display:hover .add-dates-hint {
@@ -507,11 +412,6 @@ const getUnreadCount = (comments) => {
   align-items: center;
   margin-top: 0.35rem;
   flex-wrap: wrap;
-}
-
-.dates-edit-inline.sm {
-  margin-top: 0.2rem;
-  gap: 0.35rem;
 }
 
 .date-field {
@@ -532,16 +432,7 @@ const getUnreadCount = (comments) => {
   width: 110px;
 }
 
-.date-input-xs {
-  padding: 0.15rem 0.25rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 4px;
-  font-size: 0.7rem;
-  width: 100px;
-}
-
-.date-input-sm:focus,
-.date-input-xs:focus {
+.date-input-sm:focus {
   outline: none;
   border-color: #6366f1;
 }
@@ -560,23 +451,21 @@ const getUnreadCount = (comments) => {
   font-size: 0.8rem;
 }
 
-.btn-save-xs, .btn-cancel-xs {
-  width: 20px;
-  height: 20px;
-  border-radius: 4px;
-  border: none;
-  cursor: pointer;
-  font-size: 0.7rem;
-}
-
-.btn-save-sm, .btn-save-xs {
+.btn-save-sm {
   background: #10b981;
   color: white;
 }
 
-.btn-cancel-sm, .btn-cancel-xs {
+.btn-cancel-sm {
   background: #e2e8f0;
   color: #475569;
+}
+
+.date-error {
+  width: 100%;
+  color: #ef4444;
+  font-size: 0.7rem;
+  margin-top: 0.25rem;
 }
 
 /* Task Actions */
@@ -658,122 +547,7 @@ const getUnreadCount = (comments) => {
   padding: 0.75rem 1.25rem 1rem 3.5rem;
 }
 
-.subtask-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
-  padding: 0.5rem 0;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.subtask-item:last-child {
-  border-bottom: none;
-}
-
-.subtask-content {
-  flex: 1;
-  min-width: 0;
-}
-
-.subtask-title-row {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-.subtask-title {
-  font-size: 0.875rem;
-  color: #475569;
-}
-
-.subtask-title.done {
-  text-decoration: line-through;
-  color: #94a3b8;
-}
-
-.subtask-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  flex-shrink: 0;
-}
-
-.btn-comment-sub {
-  position: relative;
-  border: none;
-  background: none;
-  font-size: 0.8rem;
-  cursor: pointer;
-  opacity: 0.5;
-  transition: opacity 0.2s;
-  padding: 0.2rem;
-}
-
-.btn-comment-sub:hover {
-  opacity: 1;
-}
-
-.btn-comment-sub.has-unread {
-  opacity: 1;
-  color: #6366f1;
-}
-
-.badge-sm {
-  position: absolute;
-  top: -3px;
-  right: -5px;
-  background: #ef4444;
-  color: white;
-  font-size: 0.5rem;
-  padding: 1px 3px;
-  border-radius: 8px;
-  font-weight: 700;
-}
-
-.btn-delete-sub {
-  border: none;
-  background: none;
-  color: #cbd5e1;
-  cursor: pointer;
-  font-size: 1.1rem;
-  padding: 0 0.25rem;
-}
-
-.btn-delete-sub:hover {
-  color: #ef4444;
-}
-
-.add-subtask {
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid #e2e8f0;
-}
-
-.add-subtask input {
-  flex: 1;
-  border: none;
-  background: white;
-  padding: 0.5rem 0.75rem;
-  border-radius: 6px;
-  font-size: 0.85rem;
-  border: 1px solid #e2e8f0;
-}
-
-.add-subtask input:focus {
-  outline: none;
-  border-color: #6366f1;
-}
-
-.btn-add {
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  color: white;
-  border: none;
-  padding: 0.4rem 0.75rem;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
+.subtasks-list {
+  margin-bottom: 0;
 }
 </style>
